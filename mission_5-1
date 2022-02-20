@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang=ja>
+<head>
+    <meta charset="UTF-8">
+    <title>mission_5-1-3</title>
+</head>
+<body>
+    <?php
+    //データベースへ接続
+    $dsn =データベース名
+	$user = ユーザー名
+	$password =　パスワード
+	$pdo = new PDO($dsn,$user,$password,array(PDO::ATTR_ERRMODE=>PDO::ERRMODE_WARNING));
+	//データベース内にテーブルを作成
+	$sql = "CREATE TABLE IF NOT EXISTS tb9"
+	." ("
+    . "id INT AUTO_INCREMENT PRIMARY KEY,"
+    . "name char(32),"          //名前
+    . "comment TEXT,"           //コメント
+    . "date char(32),"          //投稿日時
+    . "password char(32)"       //パスワード
+    .");";
+
+	$stmt = $pdo->query($sql);
+	
+	//変数に代入
+	$date1 = date("Y/m/d/ H:i:s");
+	
+	//新規投稿のボタンが押されたとき
+	if(!empty($_POST["name"]) && !empty($_POST["comment"]) && empty($_POST["edittt"])) {
+        $name1 = $_POST["name"];
+        $comment1 = $_POST["comment"];
+        $password1 = $_POST["password"];
+        if(!empty($password1)){
+            
+            //データの作成（入れ物）
+            $sql = $pdo -> prepare("INSERT INTO tb8 (name, comment, date, password) VALUES (:name, :comment, :date, :password )");
+            
+            //bindParam 内の変動値の設定
+            $name = $name1;
+            $comment = $comment1;
+            $date = $date1;
+            $password = $password1;
+            
+            //データの作成（変数のセット）
+            $sql -> bindParam(':name', $name, PDO::PARAM_STR);
+            $sql -> bindParam(':comment', $comment, PDO::PARAM_STR);
+            $sql -> bindParam(':date', $date,PDO::PARAM_STR);
+            $sql -> bindParam(':password', $password, PDO::PARAM_STR);
+        
+            //SQLを実行、結果の取得
+            $sql -> execute();  
+        }
+        elseif(empty($password1)){
+	        echo "パスワードを入力してください<br>";
+        }
+	}
+	
+	//削除ボタンが押されたとき
+	if(!empty($_POST["deleteNo"])){
+	    $delete1 = $_POST["deleteNo"];
+	    $password2 = $_POST["password2"];
+	    
+	    //削除の部分のパスワードが記入されているとき
+	    if(!empty($password2)){
+	        //投稿番号とパスワードが一致した場合
+	        $stmt = $pdo -> prepare("DELETE FROM tb8 WHERE id=:id and password=:password");
+	        
+	        //bindParam 内の変動値を設定
+	        $id = $delete1;
+	        $password = $password2;
+	        
+	        //変数のセット
+	        $stmt -> bindParam(':id',$id, PDO::PARAM_INT);
+	        $stmt -> bindParam(':password',$password, PDO::PARAM_STR);
+	        
+	        //SQLを実行、結果の取得
+	        $stmt -> execute();
+	        
+        }
+	    //削除の部分のパスワードが記入されてないとき
+	    else{
+	        echo "パスワードを入力してください<br>";
+        }
+	}
+	
+	//編集ボタンが押されたとき
+	if(!empty($_POST["Edit"])){
+	    $edit = $_POST["Edit"];
+	    $password3 = $_POST["password3"];
+	    
+	    //編集の部分にパスワードが記入されているとき
+	    if(!empty($password3)){
+	        //投稿番号とパスワードが一致した場合
+	        $stmt = $pdo -> prepare("SELECT * FROM tb8 WHERE id=:id and password=:password");
+	        
+	        //bindParam 内の変動値を設定
+	        $id = $edit;
+	        $password = $password3;
+	        
+	        //変数のセット
+	        $stmt -> bindParam(':id',$id, PDO::PARAM_INT);
+	        $stmt -> bindParam(':password' ,$password, PDO::PARAM_STR);
+	        
+	        //SQL を実行、結果の取得
+	        $stmt -> execute();
+	        
+	        $results = $stmt->fetchAll();
+            foreach ($results as $row){
+                //$rowの中にはテーブルのカラム名が入る
+                $a = $row['id'];
+                $b = $row['name'];
+                $c = $row['comment'];
+                $d = $row['date'];
+                $e = $row['password'];
+            }
+        }
+        else{
+            echo "パスワードを入力してください<br>";
+        }
+	}
+	
+	//編集作業（書き換え）
+	if(!empty($_POST["name"]) && !empty($_POST["comment"]) && !empty($_POST["edittt"])){
+	    $edit1 = $_POST["edittt"];
+	    $name1 = $_POST["name"];
+	    $comment1 = $_POST["comment"];
+	    $password1 = $_POST["password"];
+	    
+	    //投稿番号が一致する場合
+	    $stmt = $pdo -> prepare("UPDATE tb8 SET name=:name, comment=:comment, date=:date, password=:password WHERE id=:id");
+	    
+	    //bindParam 内の変動値を設定
+	    $id = $edit1;
+	    $name = $name1;
+	    $comment = $comment1;
+	    $date = $date1;
+	    $password = $password1;
+	    
+	    //変数のセット
+	    $stmt -> bindParam(':id', $id, PDO::PARAM_INT);
+	    $stmt -> bindParam(':name',$name, PDO::PARAM_STR);
+	    $stmt -> bindParam(':comment',$comment, PDO::PARAM_STR);
+	    $stmt -> bindParam(':date', $date, PDO::PARAM_STR);
+	    $stmt -> bindParam(':password', $password, PDO::PARAM_STR);
+	    
+	    //SQL を実行、結果の取得
+	    $stmt -> execute();
+	}
+	?>
+    
+    <form action = "" method = "post">
+        <p><input type = "text" name = "name" placeholder = "お名前" value = "<?php if(!empty($b)){echo $b;}?>"></p>
+        <p><input type = "text" name = "comment" placeholder = "コメント" value = "<?php if(!empty($c)){echo $c;}?>">
+        <p><input type = "text" name = "password" placeholder = "パスワード" value = "<?php if(!empty($e)){echo $e;}?>"></p>
+        <p><input type = "hidden" name = "edittt" value = "<?php if(!empty($a)){echo $a;}?>">
+        <input type = "submit" name "submit"></p>
+    </form>
+    <form action = "" method = "post">
+        <p><input type = "number" name = "deleteNo" placeholder = "削除対象番号" >
+        <p><input type = "text" name = "password2" placeholder = "パスワード">
+        <input type = "submit" name = "delete" value ="削除"></p>
+    </form>
+    <form action = "" method ="post">
+        <p><input type = "number" name = "Edit" placeholder = "編集対象番号">
+        <p><input type = "text" name = "password3" placeholder = "パスワード">
+        <input type = "submit" name = "edit" value = "編集"></p>
+    </form>
+    
+    <?php
+    $sql = 'SELECT * FROM tb8';
+    $stmt = $pdo->query($sql);
+    $results = $stmt->fetchAll();
+    foreach ($results as $row){
+        //$rowの中にはテーブルのカラム名が入る
+        echo $row['id'].',';
+        echo $row['name'].',';
+        echo $row['comment'].',';
+        echo $row['date'].'<br>';
+        echo "<hr>";
+    }
+    ?>
+    
+</body>
+</html>
+    
+    
